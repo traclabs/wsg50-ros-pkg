@@ -322,9 +322,9 @@ void timer_cb(const ros::TimerEvent& ev)
     // \todo Use name of node for joint names
 	sensor_msgs::JointState joint_states;
 	joint_states.header.stamp = ros::Time::now();;
-	joint_states.header.frame_id = "wsg50_base_link";
-	joint_states.name.push_back("wsg50_finger_left_joint");
-	joint_states.name.push_back("wsg50_finger_right_joint");
+	joint_states.header.frame_id = "summit_xl_wsg50_base_link";
+	joint_states.name.push_back("summit_xl_wsg50_finger_left_joint");
+	joint_states.name.push_back("summit_xl_wsg50_finger_right_joint");
 	joint_states.position.resize(2);
 
 	joint_states.position[0] = -info.position/2000.0;
@@ -335,6 +335,7 @@ void timer_cb(const ros::TimerEvent& ev)
 	joint_states.effort.resize(2);
 	joint_states.effort[0] = info.f_motor;
 	joint_states.effort[1] = info.f_motor;
+	
 
 	g_pub_joint.publish(joint_states);
 
@@ -586,7 +587,7 @@ int main( int argc, char **argv )
 
 		// Publisher
 		g_pub_state = nh.advertise<wsg_50_common::Status>("status", 1000);
-		g_pub_joint = nh.advertise<sensor_msgs::JointState>("/joint_states", 10);
+		g_pub_joint = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
         if (g_mode_script || g_mode_periodic)
             g_pub_moving = nh.advertise<std_msgs::Bool>("moving", 10);
 
