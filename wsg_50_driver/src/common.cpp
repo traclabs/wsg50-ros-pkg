@@ -289,7 +289,7 @@ const char * getStateValues( unsigned char *b ){
 	// D31 ==> MSB
 
 	//dbgPrint("%s\n", resp);
-	return resp;
+	return strdup(resp);
 }
 
 

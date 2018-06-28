@@ -87,7 +87,7 @@ int g_timer_cnt = 0;
 ros::Publisher g_pub_state, g_pub_joint, g_pub_moving;
 bool g_ismoving = false, g_mode_script = false, g_mode_periodic = false, g_mode_polling = false;
 float g_goal_position = NAN, g_goal_speed = NAN, g_speed = 10.0;
-   
+
 //------------------------------------------------------------------------
 // Unit testing
 //------------------------------------------------------------------------
@@ -143,9 +143,9 @@ bool graspSrv(wsg_50_common::Move::Request &req, wsg_50_common::Move::Response &
 bool incrementSrv(wsg_50_common::Incr::Request &req, wsg_50_common::Incr::Response &res)
 {
 	if (req.direction == "open"){
-	
+
 		if (!objectGraspped){
-		
+
 			float currentWidth = getOpening();
 			float nextWidth = currentWidth + req.increment;
 			if ( (currentWidth < GRIPPER_MAX_OPEN) && nextWidth < GRIPPER_MAX_OPEN ){
@@ -163,12 +163,12 @@ bool incrementSrv(wsg_50_common::Incr::Request &req, wsg_50_common::Incr::Respon
 			objectGraspped = false;
 		}
 	}else if (req.direction == "close"){
-	
+
 		if (!objectGraspped){
 
 			float currentWidth = getOpening();
 			float nextWidth = currentWidth - req.increment;
-		
+
 			if ( (currentWidth > GRIPPER_MIN_OPEN) && nextWidth > GRIPPER_MIN_OPEN ){
 				//grasp(nextWidth, 1);
 				move(nextWidth,20, true);
@@ -277,17 +277,17 @@ void timer_cb(const ros::TimerEvent& ev)
     } else if (g_mode_script) {
 		// ==== Call custom measure-and-move command ====
 		int res = 0;
-		if (!isnan(g_goal_position)) {
+		if (!std::isnan(g_goal_position)) {
 			ROS_INFO("Position command: pos=%5.1f, speed=%5.1f", g_goal_position, g_speed);
             res = script_measure_move(1, g_goal_position, g_speed, info);
-		} else if (!isnan(g_goal_speed)) {
+		} else if (!std::isnan(g_goal_speed)) {
 			ROS_INFO("Velocity command: speed=%5.1f", g_goal_speed);
             res = script_measure_move(2, 0, g_goal_speed, info);
 		} else
             res = script_measure_move(0, 0, 0, info);
-		if (!isnan(g_goal_position))
+		if (!std::isnan(g_goal_position))
 			g_goal_position = NAN;
-		if (!isnan(g_goal_speed))
+		if (!std::isnan(g_goal_speed))
 			g_goal_speed = NAN;
 
 		if (!res) {
@@ -316,25 +316,27 @@ void timer_cb(const ros::TimerEvent& ev)
 	status_msg.force_finger1 = info.f_finger1;
 
 	g_pub_state.publish(status_msg);
-             
+
 
 	// ==== Joint state msg ====
+    // \todo Use name of node for joint names
 	sensor_msgs::JointState joint_states;
 	joint_states.header.stamp = ros::Time::now();;
-	joint_states.header.frame_id = "wsg_50_gripper_base_link";
-		joint_states.name.push_back("wsg_50_gripper_base_joint_gripper_left");
-	joint_states.name.push_back("wsg_50_gripper_base_joint_gripper_right");
-		joint_states.position.resize(2);
+	joint_states.header.frame_id = "summit_xl_wsg50_base_link";
+	joint_states.name.push_back("summit_xl_wsg50_finger_left_joint");
+	joint_states.name.push_back("summit_xl_wsg50_finger_right_joint");
+	joint_states.position.resize(2);
 
 	joint_states.position[0] = -info.position/2000.0;
 	joint_states.position[1] = info.position/2000.0;
-	joint_states.velocity.resize(2);		
+	joint_states.velocity.resize(2);
     joint_states.velocity[0] = info.speed/1000.0;
     joint_states.velocity[1] = info.speed/1000.0;
 	joint_states.effort.resize(2);
 	joint_states.effort[0] = info.f_motor;
 	joint_states.effort[1] = info.f_motor;
 	
+
 	g_pub_joint.publish(joint_states);
 
 	// printf("Timer, last duration: %6.1f\n", ev.profile.last_duration.toSec() * 1000.0);
@@ -358,9 +360,9 @@ void read_thread(int interval_ms)
     status_msg.status = "UNKNOWN";
 
     sensor_msgs::JointState joint_states;
-    joint_states.header.frame_id = "wsg_50_gripper_base_link";
-    joint_states.name.push_back("wsg_50_gripper_base_joint_gripper_left");
-    joint_states.name.push_back("wsg_50_gripper_base_joint_gripper_right");
+    joint_states.header.frame_id = "wsg50_base_link";
+    joint_states.name.push_back("wsg50_finger_left_joint");
+    joint_states.name.push_back("wsg50_finger_right_joint");
     joint_states.position.resize(2);
     joint_states.velocity.resize(2);
     joint_states.effort.resize(2);
@@ -381,7 +383,7 @@ void read_thread(int interval_ms)
         msg_free(&msg);
         res = msg_receive( &msg );
         if (res < 0 || msg.len < 2) {
-            ROS_ERROR("Gripper response failure: too short");
+            ROS_ERROR("Gripper response failure");
             continue;
         }
 
@@ -398,7 +400,7 @@ void read_thread(int interval_ms)
         }
 
         // Handle response types
-        int motion = -1;  
+        int motion = -1;
         switch (msg.id) {
         /*** Opening ***/
         case 0x43:
@@ -585,12 +587,14 @@ int main( int argc, char **argv )
 
 		// Publisher
 		g_pub_state = nh.advertise<wsg_50_common::Status>("status", 1000);
-		g_pub_joint = nh.advertise<sensor_msgs::JointState>("/joint_states", 10);
+		g_pub_joint = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
         if (g_mode_script || g_mode_periodic)
             g_pub_moving = nh.advertise<std_msgs::Bool>("moving", 10);
 
-		ROS_INFO("Ready to use, homing now...");
+		ROS_INFO("Ready to use. Homing and taring now...");
 		homing();
+        ros::Duration(0.5).sleep();
+        doTare();
 
 		if (grasping_force > 0.0) {
 			ROS_INFO("Setting grasping force limit to %5.1f", grasping_force);
