@@ -87,7 +87,7 @@ int g_timer_cnt = 0;
 ros::Publisher g_pub_state, g_pub_joint, g_pub_moving;
 bool g_ismoving = false, g_mode_script = false, g_mode_periodic = false, g_mode_polling = false;
 float g_goal_position = NAN, g_goal_speed = NAN, g_speed = 10.0;
-
+std::string prefix;
 //------------------------------------------------------------------------
 // Unit testing
 //------------------------------------------------------------------------
@@ -322,9 +322,9 @@ void timer_cb(const ros::TimerEvent& ev)
     // \todo Use name of node for joint names
 	sensor_msgs::JointState joint_states;
 	joint_states.header.stamp = ros::Time::now();;
-	joint_states.header.frame_id = "summit_xl_wsg50_base_link";
-	joint_states.name.push_back("summit_xl_wsg50_finger_left_joint");
-	joint_states.name.push_back("summit_xl_wsg50_finger_right_joint");
+	joint_states.header.frame_id = prefix + "base_link";
+	joint_states.name.push_back(prefix +  "finger_left_joint");
+	joint_states.name.push_back(prefix + "finger_right_joint");
 	joint_states.position.resize(2);
 
 	joint_states.position[0] = -info.position/2000.0;
@@ -360,9 +360,9 @@ void read_thread(int interval_ms)
     status_msg.status = "UNKNOWN";
 
     sensor_msgs::JointState joint_states;
-    joint_states.header.frame_id = "wsg50_base_link";
-    joint_states.name.push_back("wsg50_finger_left_joint");
-    joint_states.name.push_back("wsg50_finger_right_joint");
+    joint_states.header.frame_id = prefix + "base_link";
+    joint_states.name.push_back(prefix + "finger_left_joint");
+    joint_states.name.push_back(prefix + "finger_right_joint");
     joint_states.position.resize(2);
     joint_states.velocity.resize(2);
     joint_states.effort.resize(2);
@@ -536,6 +536,7 @@ int main( int argc, char **argv )
    nh.param("com_mode", com_mode, std::string(""));
    nh.param("rate", rate, 1.0); // With custom script, up to 30Hz are possible
    nh.param("grasping_force", grasping_force, 0.0);
+   nh.param("prefix", prefix, std::string("wsg50_"));
 
    if (protocol == "udp")
        use_udp = true;
