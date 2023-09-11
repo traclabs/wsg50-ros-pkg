@@ -45,15 +45,15 @@ ros::Publisher vel_pub_r_, vel_pub_l_;
 ros::ServiceClient moveSC;
 double currentOpenning;
 
-void move(double width){
-	
+void move_publish(double width){
+	ROS_WARN("Move calling!!!!!!!!!!");
 		double open = width / 2;
 		
 		std_msgs::Float64 lCommand, rCommand;
 		
-		rCommand.data = open/1000;
+		rCommand.data = open/1000.0;
 		lCommand.data = rCommand.data * -1.0;
-		
+		ROS_WARN("Move publishing....");
 		vel_pub_r_.publish(rCommand);
 		vel_pub_l_.publish(lCommand);
 		
@@ -62,17 +62,17 @@ void move(double width){
 }
 
 bool moveSrv(wsg_50_common::Move::Request &req, wsg_50_common::Move::Response &res)
-{
+{   ROS_WARN("Move srv....");
 	if ( req.width >= 0.0 && req.width <= 110.0 ){
-  		ROS_INFO("Moving to %f position.", req.width);
-		move(req.width);
-		
+  		ROS_WARN("Moving to %f position.", req.width);
+		move_publish(req.width);
+		ROS_WARN("Came back from moving....");
 	}else if (req.width < 0.0 || req.width > 110.0){
 		ROS_ERROR("Imposible to move to this position. (Width values: [0.0 - 110.0] ");
 		return false;
 	}
 
-	ROS_INFO("Target position reached.");
+	ROS_WARN("Target position reached.");
   	return true;
 }
 
