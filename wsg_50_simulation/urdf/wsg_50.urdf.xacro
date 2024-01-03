@@ -68,7 +68,7 @@
      <origin xyz="0 0 0" rpy="0 0 0" />      <!--origin xyz="-0.0067 0 0.049" rpy="0 0 0" /-->
      <parent link="${name}_base_link"/>
      <child link="${name}_gripper_left" />
-     <dynamics friction="100" damping="100" />
+     <dynamics friction="20" damping="100" />
      <axis xyz="1 0 0"/>
      <!--<limit effort="10000" velocity="100"/>-->
   </joint>
@@ -173,7 +173,7 @@
      <parent link="${name}_base_link"/>
      <child link="${name}_gripper_right" />
      <axis xyz="-1 0 0"/>
-     <dynamics friction="100" damping="100" />
+     <dynamics friction="20" damping="100" />
      <!--<limit effort="10000" velocity="100"/>-->
   </joint>
 
